@@ -3,7 +3,7 @@ var assert = require('assert'),
     webdriver = require('selenium-webdriver');
 var SlotMachinePage = require('./../pages/SlotMachinePage.js').SlotMachinePage;
 
-test.describe('Slot Macine work', function() {
+test.describe('Slot Machine work', function() {
   test.it('Run slot machine once', function() {
      var driver = new webdriver.Builder().
      withCapabilities(webdriver.Capabilities.chrome()).
