@@ -1,0 +1,17 @@
+{
+  "name": "webdriver-recipes",
+  "private": true,
+  "devDependencies": {
+    "selenium-webdriver": "~2.42.1",
+    "nightwatch": "^0.9.9"
+  },
+  "scripts": {
+    "test": "./node_modules/.bin/mocha test/slotMachineTests.js"
+  },
+  "dependencies": {
+    "chai": "^4.1.1",
+    "express": "^4.15.4",
+    "mocha": "^3.5.0",
+    "request": "^2.81.0"
+  }
+}
