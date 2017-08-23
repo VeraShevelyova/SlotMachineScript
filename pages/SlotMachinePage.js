@@ -294,10 +294,6 @@ var SlotMachinePage = function(driver){
 
     };
 
-    this.closeBrowser  = function()  {
-        driver.quit();
-    }
-
     this.isActualWon = function(){
         slotsOuterContainer.getAttribute("class").then(function (classAttr) {
             var res = classAttr === 'won';

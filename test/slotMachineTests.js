@@ -1,29 +1,33 @@
 var assert = require('assert'),
     test = require('selenium-webdriver/testing'),
-    webdriver = require('selenium-webdriver');
+    webdriver = require('selenium-webdriver'),
+    driver;
 var SlotMachinePage = require('./../pages/SlotMachinePage.js').SlotMachinePage;
 
 test.describe('Slot Machine work', function() {
+
+    beforeEach(function() {
+         driver = new webdriver.Builder().
+         withCapabilities(webdriver.Capabilities.chrome()).
+        build();
+        driver.get('http://slotmachinescript.com/')
+    });
+
+     afterEach(function() {
+         driver.quit();
+    });
+
   test.it('Run slot machine once', function() {
-     var driver = new webdriver.Builder().
-     withCapabilities(webdriver.Capabilities.chrome()).
-     build();
-     driver.get('http://slotmachinescript.com/')
-     var slotMachinePage = new SlotMachinePage(driver);
-     slotMachinePage.rememberState();
+    var slotMachinePage = new SlotMachinePage(driver);
+    slotMachinePage.rememberState();
     slotMachinePage.clickSpinButton();
     slotMachinePage.compareActualAndExpectedState('SpinButtonClick');
     slotMachinePage.waitUntilRun();
     slotMachinePage.checkSpinResult();
     slotMachinePage.compareActualAndExpectedState('AfterSpinResult');
-    slotMachinePage.closeBrowser();
   });
 
-    test.it('Run slot machine after increasing bets', function() {
-        var driver = new webdriver.Builder().
-        withCapabilities(webdriver.Capabilities.chrome()).
-        build();
-        driver.get('http://slotmachinescript.com/');
+   test.it('Run slot machine after increasing bets', function() {
         var slotMachinePage = new SlotMachinePage(driver);
         slotMachinePage.rememberState();
         slotMachinePage.clickBetUpButton();
@@ -34,14 +38,9 @@ test.describe('Slot Machine work', function() {
         slotMachinePage.waitUntilRun();
         slotMachinePage.checkSpinResult();
         slotMachinePage.compareActualAndExpectedState('AfterSpinResult');
-        slotMachinePage.closeBrowser();
     });
 
     test.it('Check max of bets', function() {
-        var driver = new webdriver.Builder().
-        withCapabilities(webdriver.Capabilities.chrome()).
-        build();
-        driver.get('http://slotmachinescript.com/');
         var slotMachinePage = new SlotMachinePage(driver);
         slotMachinePage.rememberState();
         var i = 0;
@@ -50,26 +49,16 @@ test.describe('Slot Machine work', function() {
             i++
         };
         slotMachinePage.compareActualAndExpectedState('BetChange', 11);
-        slotMachinePage.closeBrowser();
     });
 
     test.it('Check min of bets', function() {
-        var driver = new webdriver.Builder().
-        withCapabilities(webdriver.Capabilities.chrome()).
-        build();
-        driver.get('http://slotmachinescript.com/');
         var slotMachinePage = new SlotMachinePage(driver);
         slotMachinePage.rememberState();
         slotMachinePage.clickBetDownButton();
         slotMachinePage.compareActualAndExpectedState('BetChange', -1);
-        slotMachinePage.closeBrowser();
     });
 
     test.it('Check decreasing of bets', function() {
-        var driver = new webdriver.Builder().
-        withCapabilities(webdriver.Capabilities.chrome()).
-        build();
-        driver.get('http://slotmachinescript.com/');
         var slotMachinePage = new SlotMachinePage(driver);
         slotMachinePage.rememberState();
             var i = 0;
@@ -85,14 +74,9 @@ test.describe('Slot Machine work', function() {
             j++
         };
         slotMachinePage.compareActualAndExpectedState('BetChange', -3);
-        slotMachinePage.closeBrowser();
     });
 
     test.it('Change background', function() {
-        var driver = new webdriver.Builder().
-        withCapabilities(webdriver.Capabilities.chrome()).
-        build();
-        driver.get('http://slotmachinescript.com/');
         var slotMachinePage = new SlotMachinePage(driver);
         slotMachinePage.clickChangeBackGroundButton();
     });
