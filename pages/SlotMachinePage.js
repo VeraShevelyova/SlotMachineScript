@@ -4,12 +4,6 @@ var utils = require('./../helpers/utils.js');
 var clickButton = utils.clickButton;
 var assert = require('assert');
 var correspondings  = {"top: -1114px;": 5, "top: -634px;": 1, "top: -1234px;": 6, "top: -994px;": 4, "top: -874px;" : 3, "top: -754px;": 2};
-var isActualWon = false;
-var startTotalWins = -1;
-var startBets = -1;
-var betContainerValues = {};
-var lastWin = 0;
-var i = 0;
 
 var State = function(){
     this.slotMachineIndex = 1;
@@ -46,7 +40,6 @@ var SlotMachinePage = function(driver){
     var changeMachineButton = driver.findElement(webdriver.By.className('btnChangeMachine'));
     var dayWinnings = driver.findElement(webdriver.By.id('dayWinnings'));
     var lifetimeWinnings = driver.findElement(webdriver.By.id('lifetimeWinnings'));
-    //var winChartAmountsArray = driver.findElements(webdriver.By.xpath("//div[@class='prizes_list_slot_machine' and not(contains(@style, 'none'))]/div[@class='trPrize']/span"));
        var winChartAmountsArray = driver.findElements(webdriver.By.xpath("//div[@id='prizes_list_slotMachine"
         + state.machine +"']/div[@class='trPrize']/span"));
     var possibleBackgrounds = driver.findElements(webdriver.By.className("changeable_background"));
@@ -108,6 +101,7 @@ var SlotMachinePage = function(driver){
     };
 
      this.waitUntilSlotMachineChanges = function(){
+         
         slotMachineWrapper.getAttribute('style').then(function(){
         console.log('Wait for slot machine change');
         driver.wait(function(){
@@ -116,33 +110,19 @@ var SlotMachinePage = function(driver){
                     if(style === "left: 0px;")
                         return true;
                 });
-        }, 20000);
+            }, 20000);
         });
-        };
-
-    this.getCurrentCredit = function(){
-        var d = webdriver.promise.defer();
-        credits.getText().then(function (text) {
-            startTotalWins = text;
-            d.fulfill(text);
-            console.log('At the begining credit number: ' + text);
-        });
-        return d.promise;
     };
 
     this.getTotalSpins = function(){
-        var d = webdriver.promise.defer();
         credits.getText().then(function (text) {
-            betContainerValues.totalSpins = text;
-            d.fulfill(text);
             state.totalSpins = text;
         });
-        return d.promise;
     };
 
     this.getBet = function(){
         bet.getText().then(function (text) {
-            state.bet = text;;
+            state.bet = text;
         });
     };
 
@@ -179,7 +159,6 @@ var SlotMachinePage = function(driver){
     this.getWinChartAmountsArray = function(){
         driver.findElements(webdriver.By.xpath("//div[@id='prizes_list_slotMachine"
         + state.machine +"']/div[@class='trPrize']/span")).then(function (winChartAmountsArray) {
-            console.log('Current machile is ' + state.machine);
             state.winChartAmountsArray = [];
             winChartAmountsArray.forEach(function(winAmount){
                 winAmount.getText().then(function(text){
@@ -300,7 +279,6 @@ var SlotMachinePage = function(driver){
                     state.actualResultRowStyles.push(style);
                 });
             });
-            console.log(state);
         });
     }
 
@@ -320,7 +298,6 @@ var SlotMachinePage = function(driver){
                         });
                     })
                 })
-                console.log(state);
             })
         });
     };
