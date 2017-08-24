@@ -25,10 +25,14 @@ var State = function(){
     this.winIndex = -1;
     this.winAmount = 0;
     this.winChartAmountsArray = [];
+    this.backGroundIndex = 0;
+    this.reel = 1;
+    this.machine = 1;
 }
 
 var SlotMachinePage = function(driver){
 
+    var state = new State();
     var spinButton = driver.findElement(webdriver.By.id('spinButton'));
     var credits = driver.findElement(webdriver.By.id('credits'));
     var bet = driver.findElement(webdriver.By.id('bet'));
@@ -41,9 +45,12 @@ var SlotMachinePage = function(driver){
     var changeMachineButton = driver.findElement(webdriver.By.className('btnChangeMachine'));
     var dayWinnings = driver.findElement(webdriver.By.id('dayWinnings'));
     var lifetimeWinnings = driver.findElement(webdriver.By.id('lifetimeWinnings'));
-    var winChartAmountsArray = driver.findElements(webdriver.By.xpath("//div[@id='prizes_list_slotMachine1']/div[@class='trPrize']/span"));
-    var possibleBackgrounds = driver.findElements(webdriver.By.xpath("//div[@id='slot_machines_backgrounds']/div"));
-    var state = new State();
+    //var winChartAmountsArray = driver.findElements(webdriver.By.xpath("//div[@class='prizes_list_slot_machine' and not(contains(@style, 'none'))]/div[@class='trPrize']/span"));
+       var winChartAmountsArray = driver.findElements(webdriver.By.xpath("//div[@id='prizes_list_slotMachine"
+        + state.machine +"']/div[@class='trPrize']/span"));
+    var possibleBackgrounds = driver.findElements(webdriver.By.className("changeable_background"));
+    var backgroundsContainer = driver.findElement(webdriver.By.id("slot_machines_backgrounds"));
+    var slotMachineWrapper = driver.findElement(webdriver.By.id("slotsSelectorWrapper"));
 
     this.openPage = function(){
         driver.get('http://slotmachinescript.com/');
@@ -65,6 +72,14 @@ var SlotMachinePage = function(driver){
         clickButton(changeBackGroundButton, 'Change Background');
     };
 
+    this.clickChangeIconsButton = function(){
+        clickButton(changeIconsButton, 'Change Icons');
+    };
+
+    this.clickChangeMachineButton = function(){
+        clickButton(changeMachineButton, 'Change machine');
+    }
+
     this.waitUntilRun = function(){
         driver.wait(function(){
             return spinButton.getAttribute('class')
@@ -75,6 +90,34 @@ var SlotMachinePage = function(driver){
                     }
                     else
                         console.log(classes);
+                });
+        }, 20000);
+    };
+
+    this.waitBackgroundRotate = function(){
+        driver.wait(function(){
+            return backgroundsContainer.getAttribute('style')
+                .then(function(style){
+                    if(style === "width: 100%; left: 0px;"){
+                        console.log(style);
+                        return true;
+                    }
+                    else
+                        console.log(style);
+                });
+        }, 20000);
+    };
+
+     this.waitUntilSlotMachineChanges = function(){
+        driver.wait(function(){
+            return slotMachineWrapper.getAttribute('style')
+                .then(function(style){
+                    if(style === "left: 0px;"){
+                        console.log(style);
+                        return true;
+                    }
+                    else
+                        console.log(style);
                 });
         }, 20000);
     };
@@ -124,8 +167,23 @@ var SlotMachinePage = function(driver){
         });
     };
 
+    this.getCurrentReel = function(){
+        slotMachineWrapper.getAttribute("class").then(function(dataReel){
+            state.reel =  (/reelSet.*/.exec(dataReel)).toString().replace('reelSet', '');
+        })
+    }
+
+    this.getCurrentMahcine = function(){
+        slotMachineWrapper.getAttribute("class").then(function(dataReel){           
+            state.machine =  (/slotMachine\d{1}/.exec(dataReel)).toString().replace('slotMachine', '');
+        })
+    }
+
     this.getWinChartAmountsArray = function(){
-        winChartAmountsArray.then(function (winChartAmountsArray) {
+        driver.findElements(webdriver.By.xpath("//div[@id='prizes_list_slotMachine"
+        + state.machine +"']/div[@class='trPrize']/span")).then(function (winChartAmountsArray) {
+            console.log("//div[@id='prizes_list_slotMachine" + state.machine +"']/div[@class='trPrize']/span")
+            console.log('Machile is' + state.machine);
             state.winChartAmountsArray = [];
             winChartAmountsArray.forEach(function(winAmount){
                 winAmount.getText().then(function(text){
@@ -139,13 +197,15 @@ var SlotMachinePage = function(driver){
         var flow = webdriver.promise.controlFlow();
         flow.execute(function(){
             state = new State();
-            console.log('get state');
         })
         flow.execute(this.getTotalSpins);
         flow.execute(this.getLastWin);
         flow.execute(this.getBet);
+        flow.execute(this.getCurrentMahcine);  
         flow.execute(this.getWinChartAmountsArray);
+        flow.execute(this.getCurrentReel);      
         flow.execute(function(){
+            console.log('Current state is ');
             console.log(state);
         })
     };
@@ -155,8 +215,9 @@ var SlotMachinePage = function(driver){
             case "SpinButtonClick":
                 var self = this;
                 credits.getText().then(function (currentTotalspins) {
-                    assert.equal(state.totalSpins - state.bet, currentTotalspins, "Number of Spins");
-                    state.totalSpins = currentTotalspins;
+                    var expectedSpins = parseInt(state.totalSpins.toString()) - parseInt(state.bet.toString());
+                    assert.equal(expectedSpins, currentTotalspins, 
+                        "Number of Spins. Expected: " + expectedSpins + " Actual: " + currentTotalspins);
                 });
                 bet.getText().then(function (currentBet) {
                     assert.equal(state.bet, currentBet, "Number of Bets");
@@ -168,7 +229,8 @@ var SlotMachinePage = function(driver){
             case "AfterSpinResult":
                 credits.getText().then(function (currentTotalspins) {
                     var expectedTotalSpins = parseInt(state.totalSpins.toString()) + parseInt(state.winAmount.toString())
-                    assert.equal(expectedTotalSpins, currentTotalspins, "Number of Spins");
+                    assert.equal(expectedTotalSpins, currentTotalspins, "Number of Spins. Expected: " + expectedTotalSpins + " Actual: " 
+                    + currentTotalspins);
                     state.totalSpins = currentTotalspins;
                 });
                 lastWin.getText().then(function (actualLastWin) {
@@ -189,7 +251,6 @@ var SlotMachinePage = function(driver){
                 });
                 flow.execute(function () {
                     winChartAmountsArray.then(function (winChartAmountsArray) {
-                        console.log('Why I am here???');
                         winChartAmountsArray.forEach(function (winAmount, index) {
                             winAmount.getText().then(function (actualAmount) {
                                 console.log(actualAmount);
@@ -203,18 +264,44 @@ var SlotMachinePage = function(driver){
                         })
                     });
                 })
+                break;
+             case "BackgroundRotate":
+                possibleBackgrounds.then(function(possibleBackgrounds){
+                    var totalAmountOfRotations = parseInt(state.backGroundIndex.toString()) + parseInt(amount.toString())
+                    var numberOfBackgrounds = possibleBackgrounds.length;
+                    var expectedIndex = totalAmountOfRotations % numberOfBackgrounds;
+                    possibleBackgrounds.forEach(function(possibleBackground, index){
+                        possibleBackground.getAttribute("style").then(function(style){
+                            console.log(style);
+                          if(index === expectedIndex)
+                               assert.equal(-1, style.indexOf("display: none;"), "Style for visible background")
+                           else
+                               assert.equal(true, style.indexOf("display: none;") > -1, "Style for not visible background")
+                        })
+                    })
+                });  
+                break;
+              case "Change Icons":
+                slotMachineWrapper.getAttribute("class").then(function(dataReel){
+                    var actualReel =  parseInt((/reelSet.*/.exec(dataReel)).toString().replace('reelSet', ''));
+                    console.log(parseInt(amount.toString()));
+                    var expectedReel = (parseInt(state.reel.toString()) + parseInt(amount.toString())) % 4;
+                    console.log('Compare actual and Expected Reel. Expected: ' + expectedReel + ' Actual: ' + actualReel);
+                    assert.equal(expectedReel , actualReel, "Check that icons has changed correctly");
+                })
+
+
+
         }
-    };
-
-    this.compareActualAndExpectedWonResult = function(){
-
     };
 
     this.getActualRow = function(){
         var reels = driver.findElements(webdriver.By.xpath("//div[@id='reel1' or @id='reel2' or @id='reel3']"));
         var d = webdriver.promise.defer();
         reels.then(function(reels){
+            actualResultRow = [];
             reels.forEach(function(reel){
+
                 reel.getAttribute("style").then(function(style){
                     actualResultRow.push(correspondings[style]);
                     console.log(correspondings[style]);
@@ -289,7 +376,8 @@ var SlotMachinePage = function(driver){
         flow.execute(this.isActualWon);
         flow.execute(this.getWinAmount)
         flow.execute(function(){
-            assert.equal(state.isExpectedWon, state.isActualWon, 'Check win Result');
+            assert.equal(state.isExpectedWon, state.isActualWon, 
+            'Check win Result. Expected: ' + state.isExpectedWon + ' Actual: ' + state.isActualWon);
         })
 
     };
@@ -299,7 +387,7 @@ var SlotMachinePage = function(driver){
             var res = classAttr === 'won';
             state.isActualWon = res;
         })
-    }
+    };
 }
 
 exports.SlotMachinePage = SlotMachinePage;

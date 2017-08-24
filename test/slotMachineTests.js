@@ -78,6 +78,38 @@ test.describe('Slot Machine work', function() {
 
     test.it('Change background', function() {
         var slotMachinePage = new SlotMachinePage(driver);
+        var flow = webdriver.promise.controlFlow();
+        flow.execute(slotMachinePage.clickChangeBackGroundButton);
+        flow.execute(slotMachinePage.waitBackgroundRotate);
+        flow.execute(function(){
+            slotMachinePage.compareActualAndExpectedState("BackgroundRotate", 1);
+        })        
+    });
+
+    test.it('Change icons', function() {
+        var slotMachinePage = new SlotMachinePage(driver);
+        slotMachinePage.rememberState();
+        slotMachinePage.clickChangeIconsButton();
+        slotMachinePage.clickChangeIconsButton();
+        slotMachinePage.compareActualAndExpectedState("Change Icons", 2);       
+    });
+
+    test.it('Run tests under different machines', function() {
+        var slotMachinePage = new SlotMachinePage(driver);
+        var i = 0;
+        while(i< 40){
+        slotMachinePage.rememberState();
         slotMachinePage.clickChangeBackGroundButton();
+        slotMachinePage.clickChangeMachineButton();
+        slotMachinePage.waitUntilSlotMachineChanges(); 
+        slotMachinePage.rememberState();  
+        slotMachinePage.clickSpinButton();
+        slotMachinePage.compareActualAndExpectedState('SpinButtonClick');
+        slotMachinePage.rememberState();  
+        slotMachinePage.waitUntilRun();
+        slotMachinePage.checkSpinResult();
+        slotMachinePage.compareActualAndExpectedState('AfterSpinResult'); 
+        i++   ;
+        }
     });
 });
