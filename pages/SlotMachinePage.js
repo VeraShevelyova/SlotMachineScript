@@ -45,6 +45,7 @@ var SlotMachinePage = function(driver){
     var possibleBackgrounds = driver.findElements(webdriver.By.className("changeable_background"));
     var backgroundsContainer = driver.findElement(webdriver.By.id("slot_machines_backgrounds"));
     var slotMachineWrapper = driver.findElement(webdriver.By.id("slotsSelectorWrapper"));
+    var thirdReel = driver.findElement(webdriver.By.id('reel3'));
 
     this.openPage = function(){
         driver.get('http://slotmachinescript.com/');
@@ -80,8 +81,11 @@ var SlotMachinePage = function(driver){
             driver.wait(function(){
                 return spinButton.getAttribute('class')
                     .then(function(classes){
-                        if(classes === "")
-                            return true;
+                        return classes === "";
+                    }).then(function(prevRes){
+                        return thirdReel.getAttribute('style').then(function(style){
+                            return prevRes && Object.keys(correspondings).indexOf(style) > -1;
+                        })
                     });
             }, 20000);
         })
