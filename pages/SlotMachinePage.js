@@ -1,29 +1,10 @@
 
 var webdriver = require('selenium-webdriver');
 var utils = require('./../helpers/utils.js');
+var State = require('./../data/state.js').State;
 var clickButton = utils.clickButton;
 var assert = require('assert');
 var correspondings  = {"top: -1114px;": 5, "top: -634px;": 1, "top: -1234px;": 6, "top: -994px;": 4, "top: -874px;" : 3, "top: -754px;": 2};
-
-var State = function(){
-    this.slotMachineIndex = 1;
-    this.totalSpins = -1;
-    this.bet = -1;
-    this.lastWin = "";
-    this.dayWinnings = -1;
-    this.lifetimeWinnings = -1;
-    this.actualResultRow = [];
-    this.actualResultRowStyles = [];
-    this.winResultsArray = [];
-    this.isExpectedWon = false;
-    this.isActualWon = false;
-    this.winIndex = -1;
-    this.winAmount = 0;
-    this.winChartAmountsArray = [];
-    this.backGroundIndex = 0;
-    this.reel = 1;
-    this.machine = 1;
-}
 
 var SlotMachinePage = function(driver){
 
@@ -97,22 +78,19 @@ var SlotMachinePage = function(driver){
             driver.wait(function(){
                 return backgroundsContainer.getAttribute('style')
                     .then(function(style){
-                        if(style === "width: 100%; left: 0px;")
-                            return true;
+                        return style === "width: 100%; left: 0px;";
                  });
             }, 20000);
         })
     };
 
-     this.waitUntilSlotMachineChanges = function(){
-         
+     this.waitUntilSlotMachineChanges = function(){        
         slotMachineWrapper.getAttribute('style').then(function(){
         console.log('Wait for slot machine change');
         driver.wait(function(){
             return slotMachineWrapper.getAttribute('style')
                 .then(function(style){
-                    if(style === "left: 0px;")
-                        return true;
+                    return style.indexOf("left: 0px;") > -1;
                 });
             }, 20000);
         });
@@ -150,7 +128,7 @@ var SlotMachinePage = function(driver){
 
     this.getCurrentReel = function(){
         slotMachineWrapper.getAttribute("class").then(function(dataReel){
-            state.reel =  (/reelSet.*/.exec(dataReel)).toString().replace('reelSet', '');
+            state.reel =  (/reelSet\d{1}/.exec(dataReel)).toString().replace('reelSet', '');
         })
     }
 
@@ -182,9 +160,10 @@ var SlotMachinePage = function(driver){
         flow.execute(this.getBet);
         flow.execute(this.getCurrentMahcine);  
         flow.execute(this.getWinChartAmountsArray);
-        flow.execute(this.getCurrentReel);      
+        flow.execute(this.getCurrentReel);   
+        flow.execute(this.getActualRow);
+        flow.execute(this.getWinResultsArray);
         flow.execute(function(){
-            console.log('Current state is ');
             console.log(state);
         })
     };
