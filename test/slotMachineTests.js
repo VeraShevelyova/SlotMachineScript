@@ -3,6 +3,7 @@ var assert = require('assert'),
     webdriver = require('selenium-webdriver'),
     driver;
 var SlotMachinePage = require('./../pages/SlotMachinePage.js').SlotMachinePage;
+var Actions = require('./../helpers/actions');
 // actions
 var spin_button_click = 'SpinButtonClick';
 var received_spin_result = 'ReceivedSpinResult';
@@ -27,25 +28,25 @@ test.describe('Slot Machine work', function () {
         var slotMachinePage = new SlotMachinePage(driver);
         slotMachinePage.rememberState();
         slotMachinePage.clickSpinButton();
-        slotMachinePage.compareStateAfterAction(spin_button_click);
+        slotMachinePage.compareStateAfterAction(Actions.spin_button_click);
         slotMachinePage.rememberState();
         slotMachinePage.waitUntilRun();
         slotMachinePage.checkSpinResult();
-        slotMachinePage.compareStateAfterAction(received_spin_result);
+        slotMachinePage.compareStateAfterAction(Actions.received_spin_result);
     });
 
     test.it('Run slot machine after increasing bets', function () {
         var slotMachinePage = new SlotMachinePage(driver);
         slotMachinePage.rememberState();
         slotMachinePage.clickBetUpButton();
-        slotMachinePage.compareStateAfterAction(bet_change, 1);
+        slotMachinePage.compareStateAfterAction(Actions.bet_change, 1);
         slotMachinePage.rememberState();
         slotMachinePage.clickSpinButton();
-        slotMachinePage.compareStateAfterAction(spin_button_click);
+        slotMachinePage.compareStateAfterAction(Actions.spin_button_click);
         slotMachinePage.rememberState();
         slotMachinePage.waitUntilRun();
         slotMachinePage.checkSpinResult();
-        slotMachinePage.compareStateAfterAction(received_spin_result);
+        slotMachinePage.compareStateAfterAction(Actions.received_spin_result);
     });
 
     test.it('Check max of bets', function () {
@@ -56,14 +57,14 @@ test.describe('Slot Machine work', function () {
             slotMachinePage.clickBetUpButton();
             i++
         };
-        slotMachinePage.compareStateAfterAction(bet_change, 11);
+        slotMachinePage.compareStateAfterAction(Actions.bet_change, 11);
     });
 
     test.it('Check min of bets', function () {
         var slotMachinePage = new SlotMachinePage(driver);
         slotMachinePage.rememberState();
         slotMachinePage.clickBetDownButton();
-        slotMachinePage.compareStateAfterAction(bet_change, -1);
+        slotMachinePage.compareStateAfterAction(Actions.bet_change, -1);
     });
 
     test.it('Check decreasing of bets', function () {
@@ -74,14 +75,14 @@ test.describe('Slot Machine work', function () {
             slotMachinePage.clickBetUpButton();
             i++
         };
-        slotMachinePage.compareStateAfterAction(bet_change, 5);
+        slotMachinePage.compareStateAfterAction(Actions.bet_change, 5);
         slotMachinePage.rememberState();
         var j = 0;
         while (j < 3) {
             slotMachinePage.clickBetDownButton();
             j++
         };
-        slotMachinePage.compareStateAfterAction(bet_change, -3);
+        slotMachinePage.compareStateAfterAction(Actions.bet_change, -3);
     });
 
     test.it('Change background', function () {
@@ -90,7 +91,7 @@ test.describe('Slot Machine work', function () {
         flow.execute(slotMachinePage.clickChangeBackGroundButton);
         flow.execute(slotMachinePage.waitBackgroundRotate);
         flow.execute(function () {
-            slotMachinePage.compareStateAfterAction(background_rotate, 1);
+            slotMachinePage.compareStateAfterAction(Actions.background_rotate, 1);
         })
     });
 
@@ -99,7 +100,7 @@ test.describe('Slot Machine work', function () {
         slotMachinePage.rememberState();
         slotMachinePage.clickChangeIconsButton();
         slotMachinePage.clickChangeIconsButton();
-        slotMachinePage.compareStateAfterAction(change_icons, 2);
+        slotMachinePage.compareStateAfterAction(Actions.change_icons, 2);
     });
 
     test.it('Run tests under different machines', function () {
@@ -112,11 +113,11 @@ test.describe('Slot Machine work', function () {
             slotMachinePage.waitUntilSlotMachineChanges();
             slotMachinePage.rememberState();
             slotMachinePage.clickSpinButton();
-            slotMachinePage.compareStateAfterAction(spin_button_click);
+            slotMachinePage.compareStateAfterAction(Actions.spin_button_click);
             slotMachinePage.rememberState();
             slotMachinePage.waitUntilRun();
             slotMachinePage.checkSpinResult();
-            slotMachinePage.compareStateAfterAction(received_spin_result);
+            slotMachinePage.compareStateAfterAction(Actions.received_spin_result);
             i++;
         }
     });

@@ -2,11 +2,13 @@
 var webdriver = require('selenium-webdriver');
 var utils = require('./../helpers/utils.js');
 var State = require('./../data/state.js').State;
+var Actions = require('./../helpers/actions');
 var clickButton = utils.clickButton;
 var compareTextOfElement = utils.compareTextOfElement;
-var compareTest = utils.compareText;
+var compareText = utils.compareText;
 var assert = require('assert');
 var correspondings = { "top: -1114px;": 5, "top: -634px;": 1, "top: -1234px;": 6, "top: -994px;": 4, "top: -874px;": 3, "top: -754px;": 2 };
+var numberOfReelsPlusOne = 4;
 
 var SlotMachinePage = function (driver) {
 
@@ -160,9 +162,6 @@ var SlotMachinePage = function (driver) {
         flow.execute(this.getCurrentReel);
         flow.execute(this.getActualRow);
         flow.execute(this.getWinResultsArray);
-        flow.execute(function () {
-            //console.log(state);
-        })
     };
 
     this.getExpectedBet = function(changeAmount){
@@ -188,7 +187,7 @@ var SlotMachinePage = function (driver) {
 
     this.compareStateAfterAction = function (action, amount) {
         switch (action) {
-            case "SpinButtonClick":
+            case Actions.spin_button_click:
                 var self = this;
                 credits.getText().then(function (currentTotalspins) {
                     console.log("Check values after spin button is clicked...");
@@ -211,7 +210,7 @@ var SlotMachinePage = function (driver) {
                     }
                 });
                 break;
-            case "BetChange":
+            case Actions.bet_change:
                 var flow = webdriver.promise.controlFlow();
                 flow.execute(function () {
                     compareTextOfElement(bet, self.getExpectedBet(), "Bet");
@@ -226,7 +225,7 @@ var SlotMachinePage = function (driver) {
                     });
                 })
                 break;
-            case "BackgroundRotate":
+            case Actions.background_rotate:
                 possibleBackgrounds.then(function (possibleBackgrounds) {
                     console.log("Comparing that background has changed correctly");
                     var totalAmountOfRotations = parseInt(state.backGroundIndex.toString()) + parseInt(amount.toString())
@@ -235,18 +234,18 @@ var SlotMachinePage = function (driver) {
                     possibleBackgrounds.forEach(function (possibleBackground, index) {
                         possibleBackground.getAttribute("style").then(function (style) {
                             if (index === expectedIndex)
-                                assert.equal(-1, style.indexOf("display: none;"), "Style for visible background")
+                                compareText(true, style.indexOf("display: none;") === -1, "Style for visible background")
                             else
-                                assert.equal(true, style.indexOf("display: none;") > -1, "Style for not visible background")
+                                compareText(true, style.indexOf("display: none;") > -1, "Style for not visible background")
                         })
                     })
                 });
                 break;
-            case "ChangeIcons":
+            case Actions.change_icons:
                 slotMachineWrapper.getAttribute("class").then(function (dataReel) {
                     var actualReel = parseInt((/reelSet.*/.exec(dataReel)).toString().replace('reelSet', ''));
-                    var expectedReel = (state.reel.toInt() + amount.toInt()) % 4;
-                    compareTest(expectedReel, actualReel, "Active Icon");
+                    var expectedReel = (state.reel.toInt() + amount.toInt()) % numberOfReelsPlusOne;
+                    compareText(expectedReel, actualReel, "Active Icon");
                 })
         }
     };
@@ -325,7 +324,7 @@ var SlotMachinePage = function (driver) {
         flow.execute(this.isActualWon);
         flow.execute(this.getWinAmount)
         flow.execute(function () {
-            compareTest(state.isExpectedWon, state.isActualWon, "Win result");
+            compareText(state.isExpectedWon, state.isActualWon, "Win result");
         })
 
     };
