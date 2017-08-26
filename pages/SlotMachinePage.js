@@ -3,6 +3,8 @@ var webdriver = require('selenium-webdriver');
 var utils = require('./../helpers/utils.js');
 var State = require('./../data/state.js').State;
 var clickButton = utils.clickButton;
+var compareTextOfElement = utils.compareTextOfElement;
+var compareTest = utils.compareText;
 var assert = require('assert');
 var correspondings = { "top: -1114px;": 5, "top: -634px;": 1, "top: -1234px;": 6, "top: -994px;": 4, "top: -874px;": 3, "top: -754px;": 2 };
 
@@ -27,10 +29,7 @@ var SlotMachinePage = function (driver) {
     var backgroundsContainer = driver.findElement(webdriver.By.id("slot_machines_backgrounds"));
     var slotMachineWrapper = driver.findElement(webdriver.By.id("slotsSelectorWrapper"));
     var thirdReel = driver.findElement(webdriver.By.id('reel3'));
-
-    this.openPage = function () {
-        driver.get('http://slotmachinescript.com/');
-    };
+    var reels = driver.findElements(webdriver.By.xpath("//div[@id='reel1' or @id='reel2' or @id='reel3']"));
 
     this.clickSpinButton = function () {
         clickButton(spinButton, 'Spin');
@@ -96,34 +95,30 @@ var SlotMachinePage = function (driver) {
         });
     };
 
-    this.getTotalSpins = function () {
-        credits.getText().then(function (text) {
-            state.totalSpins = text;
-        });
+    this.setValue = function(element, stateProperty){
+        element.getText().then(function(text){
+            state[stateProperty] = text;
+        })
     };
 
-    this.getBet = function () {
-        bet.getText().then(function (text) {
-            state.bet = text;
-        });
+    this.setTotalSpins = function () {
+        this.setValue(credits, 'totalSpins');
     };
 
-    this.getLastWin = function () {
-        lastWin.getText().then(function (text) {
-            state.lastWin = text;
-        });
+    this.setBet = function () {
+        this.setValue(bet, 'bet');
     };
 
-    this.getDaydayWinnings = function () {
-        dayWinnings.getText().then(function (text) {
-            state.dayWinnings = text;
-        });
+    this.setLastWin = function () {
+        this.setValue(lastWin, 'lastWin');
     };
 
-    this.getlifetimeWinnings = function () {
-        lifetimeWinnings.getText().then(function (text) {
-            state.lifetimeWinnings = text;
-        });
+    this.setDaydayWinnings = function () {
+        this.setValue(dayWinnings, 'dayWinnings');
+    };
+
+    this.setLifetimeWinnings = function () {
+        this.setValue(lifetimeWinnings, 'lifetimeWinnings');
     };
 
     this.getCurrentReel = function () {
@@ -132,7 +127,7 @@ var SlotMachinePage = function (driver) {
         })
     }
 
-    this.getCurrentMahcine = function () {
+    this.getCurrentMachine = function () {
         slotMachineWrapper.getAttribute("class").then(function (dataReel) {
             state.machine = (/slotMachine\d{1}/.exec(dataReel)).toString().replace('slotMachine', '');
         })
@@ -155,76 +150,85 @@ var SlotMachinePage = function (driver) {
         flow.execute(function () {
             state = new State();
         })
-        flow.execute(this.getTotalSpins);
-        flow.execute(this.getLastWin);
-        flow.execute(this.getBet);
-        flow.execute(this.getCurrentMahcine);
+        flow.execute(this.setTotalSpins.bind(this));
+        flow.execute(this.setLastWin.bind(this));
+        flow.execute(this.setBet.bind(this));
+        flow.execute(this.setDaydayWinnings.bind(this));
+        flow.execute(this.setLifetimeWinnings.bind(this));
+        flow.execute(this.getCurrentMachine);
         flow.execute(this.getWinChartAmountsArray);
         flow.execute(this.getCurrentReel);
         flow.execute(this.getActualRow);
         flow.execute(this.getWinResultsArray);
         flow.execute(function () {
-            console.log(state);
+            //console.log(state);
         })
     };
 
-    this.compareActualAndExpectedState = function (action, amount) {
+    this.getExpectedBet = function(changeAmount){
+        var expectedBet = state.bet.toInt() + changeAmount;
+        if(expectedBet >state.maxBet)
+            expectedBet = state.maxBet;
+        if(expectedBet< state.minBet)
+            expectedBet = state.minBet;
+        return expectedBet;
+    };
+
+    this.getExpectedWinAmountsArray = function(){
+        var self = this;
+        var expectedWinAmountsArray = [];
+        winChartAmountsArray.then(function (winChartAmountsArray) {
+            var expectedBet = self.getExpectedBet();
+            winChartAmountsArray.forEach(function (winAmount, index) {
+                var expectedAmount = (state.winChartAmountsArray[index] / state.bet.toInt()) * expectedBet;
+                expectedWinAmountsArray.push(expectedAmount);
+            })
+        });
+    }
+
+    this.compareStateAfterAction = function (action, amount) {
         switch (action) {
             case "SpinButtonClick":
                 var self = this;
                 credits.getText().then(function (currentTotalspins) {
-                    var expectedSpins = parseInt(state.totalSpins.toString()) - parseInt(state.bet.toString());
-                    assert.equal(expectedSpins, currentTotalspins,
-                        "Number of Spins. Expected: " + expectedSpins + " Actual: " + currentTotalspins);
+                    console.log("Check values after spin button is clicked...");
+                    var expectedSpins = state.totalSpins.toInt() - state.bet.toInt();
+                    compareTextOfElement(credits, expectedSpins, "Total Spins");
+                    compareTextOfElement(bet, state.bet, "Bets");
+                    compareTextOfElement(lastWin, state.lastWin, "Last win");
                 });
-                bet.getText().then(function (currentBet) {
-                    assert.equal(state.bet, currentBet, "Number of Bets");
-                });
-                lastWin.getText().then(function (currentLastWin) {
-                    assert.equal("", currentLastWin, "Last Win");
-                })
                 break;
-            case "AfterSpinResult":
+            case "ReceivedSpinResult":
                 credits.getText().then(function (currentTotalspins) {
-                    var expectedTotalSpins = parseInt(state.totalSpins.toString()) + parseInt(state.winAmount.toString())
-                    assert.equal(expectedTotalSpins, currentTotalspins, "Number of Spins. Expected: " + expectedTotalSpins + " Actual: "
-                        + currentTotalspins);
-                    state.totalSpins = currentTotalspins;
-                });
-                lastWin.getText().then(function (actualLastWin) {
-                    var expectedLastWin = parseInt(state.winAmount.toString()) === 0 ? "" : parseInt(state.winAmount.toString());
-                    assert.equal(expectedLastWin, actualLastWin, "Last Win");
-                    state.lastWin = actualLastWin;
+                    console.log("Check values after getting spin result");
+                    var expectedTotalSpins = state.totalSpins.toInt() + state.winAmount.toString().toInt();
+                    compareTextOfElement(credits, expectedTotalSpins, "Total spins");
+                    var expectedLastWin = state.winAmount === 0 ? "" : state.winAmount;
+                    compareTextOfElement(lastWin, expectedLastWin, "Last win");
+                    if(state.machine === 3) {
+                        compareTextOfElement(dayWinnings, state.dayWinnings + expectedLastWin, 'Daily Winings');
+                        compareTextOfElement(lifetimeWinnings, state.lifetimeWinnings + expectedLastWin, 'Lifitime Winings');
+                    }
                 });
                 break;
             case "BetChange":
                 var flow = webdriver.promise.controlFlow();
                 flow.execute(function () {
-                    bet.getText().then(function (currentBet) {
-                        var am = parseInt(amount.toString()) > 9 ? 9 : parseInt(amount.toString());
-                        var expectedBet = parseInt(state.bet.toString()) + am;
-                        expectedBet = expectedBet === 0 ? 1 : expectedBet
-                        assert.equal(expectedBet, currentBet, "Number of Bets");
-                    });
+                    compareTextOfElement(bet, self.getExpectedBet(), "Bet");
                 });
                 flow.execute(function () {
                     winChartAmountsArray.then(function (winChartAmountsArray) {
+                        var expectedBet = self.getExpectedBet();
                         winChartAmountsArray.forEach(function (winAmount, index) {
-                            winAmount.getText().then(function (actualAmount) {
-                                console.log(actualAmount);
-                                var am = parseInt(amount.toString()) > 9 ? 9 : parseInt(amount.toString());
-                                var betAm = (parseInt(state.bet.toString()) + am) === 0 ? 1 : (parseInt(state.bet.toString()) + am);
-                                var expectedAmount = (state.winChartAmountsArray[index] / parseInt(state.bet.toString())) * betAm;
-                                console.log(expectedAmount);
-                                console.log(state);
-                                assert.equal(actualAmount, expectedAmount, 'Compare win amount. Expected:' + expectedAmount + ' but actual: ' + actualAmount);
-                            })
+                            var expectedAmount = (state.winChartAmountsArray[index] / state.bet.toInt()) * expectedBet;
+                            compareTextOfElement(winAmount, expectedAmount, "Win amount with index " + index);
                         })
                     });
                 })
                 break;
             case "BackgroundRotate":
                 possibleBackgrounds.then(function (possibleBackgrounds) {
+                    console.log("Comparing that background has changed correctly");
                     var totalAmountOfRotations = parseInt(state.backGroundIndex.toString()) + parseInt(amount.toString())
                     var numberOfBackgrounds = possibleBackgrounds.length;
                     var expectedIndex = totalAmountOfRotations % numberOfBackgrounds;
@@ -238,21 +242,16 @@ var SlotMachinePage = function (driver) {
                     })
                 });
                 break;
-            case "Change Icons":
+            case "ChangeIcons":
                 slotMachineWrapper.getAttribute("class").then(function (dataReel) {
                     var actualReel = parseInt((/reelSet.*/.exec(dataReel)).toString().replace('reelSet', ''));
-                    var expectedReel = (parseInt(state.reel.toString()) + parseInt(amount.toString())) % 4;
-                    console.log('Compare actual and Expected Reel. Expected: ' + expectedReel + ' Actual: ' + actualReel);
-                    assert.equal(expectedReel, actualReel, "Check that icons has changed correctly");
+                    var expectedReel = (state.reel.toInt() + amount.toInt()) % 4;
+                    compareTest(expectedReel, actualReel, "Active Icon");
                 })
-
-
-
         }
     };
 
     this.getActualRow = function () {
-        var reels = driver.findElements(webdriver.By.xpath("//div[@id='reel1' or @id='reel2' or @id='reel3']"));
         reels.then(function (reels) {
             state.actualResultRow = [];
             state.actualResultRowStyles = [];
@@ -303,6 +302,12 @@ var SlotMachinePage = function (driver) {
         return isExpectedWon;
     };
 
+    this.isActualWon = function () {
+        slotsOuterContainer.getAttribute("class").then(function (classAttr) {;
+            state.isActualWon = classAttr === 'won';
+        })
+    };
+
     this.getWinAmount = function () {
         if (state.winIndex > -1) {
             var winAmountEl = driver.findElement(webdriver.By.css("#prizes_list_slotMachine" + state.machine + " > div:nth-child(" + (state.winIndex + 1) + ") > span"));
@@ -320,17 +325,9 @@ var SlotMachinePage = function (driver) {
         flow.execute(this.isActualWon);
         flow.execute(this.getWinAmount)
         flow.execute(function () {
-            assert.equal(state.isExpectedWon, state.isActualWon,
-                'Check win Result. Expected: ' + state.isExpectedWon + ' Actual: ' + state.isActualWon);
+            compareTest(state.isExpectedWon, state.isActualWon, "Win result");
         })
 
-    };
-
-    this.isActualWon = function () {
-        slotsOuterContainer.getAttribute("class").then(function (classAttr) {
-            var res = classAttr === 'won';
-            state.isActualWon = res;
-        })
     };
 }
 

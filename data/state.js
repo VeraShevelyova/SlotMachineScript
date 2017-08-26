@@ -16,6 +16,8 @@ var State = function(){
     this.backGroundIndex = 0;
     this.reel = 1;
     this.machine = 1;
+    this.maxBet = 10;
+    this.minBet = 1;
 };
 
 exports.State = State;
