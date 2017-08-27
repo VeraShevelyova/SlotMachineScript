@@ -3,7 +3,7 @@ var assert = require('assert'),
     webdriver = require('selenium-webdriver'),
     driver;
 var SlotMachinePage = require('./../pages/SlotMachinePage.js').SlotMachinePage;
-var Actions = require('./../helpers/actions');
+var url  = require('./../package.json').url;
 // actions
 var spin_button_click = 'SpinButtonClick';
 var received_spin_result = 'ReceivedSpinResult';
@@ -17,7 +17,7 @@ test.describe('Slot Machine work', function () {
         driver = new webdriver.Builder().
             withCapabilities(webdriver.Capabilities.chrome()).
             build();
-        driver.get('http://slotmachinescript.com/')
+        driver.get(url)
     });
 
     afterEach(function () {
